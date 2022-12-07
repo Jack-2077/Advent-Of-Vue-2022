@@ -4,7 +4,8 @@ import { useDebounceFn } from '@vueuse/core'
 
 const searchTerm = ref('')
 
-const products = { isLoading: false, data: [] }
+let products = ref([])
+let isLoading = ref(false)
 
 async function fetchProducts(term) {
   const res = await fetch(`https://dummyjson.com/products/search?q=${term}`)
@@ -13,18 +14,22 @@ async function fetchProducts(term) {
 
 const findProducts = async newTerm => {
   if (newTerm) {
-    products.data = await fetchProducts(newTerm)
-    products.isLoading = false
-    console.log(products)
+    products.value = await fetchProducts(newTerm)
+    isLoading.value = false
   }
 }
 
-watch(searchTerm, () => {
-  console.log(products)
-  products.isLoading = true
+watch(products, newProducts => {
+  if (newProducts.length === 0) {
+    alert('No product found')
+  }
 })
 
-watch(searchTerm, useDebounceFn(findProducts, 300))
+watch(searchTerm, () => {
+  isLoading.value = true
+})
+
+watch(searchTerm, useDebounceFn(findProducts, 1000))
 </script>
 
 <template>
@@ -37,9 +42,9 @@ watch(searchTerm, useDebounceFn(findProducts, 300))
       placeholder="Start typing..."
       on-change="findProducts"
     />
-    <p v-if="products.isLoading">Loading...</p>
-    <ul class="list-disc">
-      <li v-for="product of products.data">
+    <p v-if="isLoading">Loading...</p>
+    <ul v-else class="list-disc">
+      <li v-for="product of products">
         {{ product.title }}
       </li>
     </ul>
