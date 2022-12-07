@@ -1,18 +1,24 @@
-<script setup>
+<script setup lang="ts">
 import { ref, watch } from 'vue'
 import { useDebounceFn } from '@vueuse/core'
 
-const searchTerm = ref('')
-
-let products = ref([])
-let isLoading = ref(false)
-
-async function fetchProducts(term) {
-  const res = await fetch(`https://dummyjson.com/products/search?q=${term}`)
-  return (await res.json()).products
+interface Product {
+  id: number
+  price: number
+  title: string
 }
 
-const findProducts = async newTerm => {
+const searchTerm = ref('')
+
+let products = ref(<Product[]>[])
+let isLoading = ref(false)
+
+async function fetchProducts(term: string) {
+  const res = await fetch(`https://dummyjson.com/products/search?q=${term}`)
+  return (await res.json()).products as Product[]
+}
+
+const findProducts = async (newTerm: string) => {
   if (newTerm) {
     products.value = await fetchProducts(newTerm)
     isLoading.value = false
@@ -44,9 +50,7 @@ watch(searchTerm, useDebounceFn(findProducts, 1000))
     />
     <p v-if="isLoading">Loading...</p>
     <ul v-else class="list-disc">
-      <li v-for="product of products">
-        {{ product.title }}
-      </li>
+      <li v-for="product of products" :key="product.id">{{ product.title }} - {{ product.price }}</li>
     </ul>
   </div>
 </template>
